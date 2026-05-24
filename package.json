@@ -1,0 +1,38 @@
+{
+  "name": "claude-usage-mcp",
+  "version": "0.1.0",
+  "description": "CLI and MCP server for retrieving current Claude OAuth usage.",
+  "type": "module",
+  "bin": {
+    "claude-usage-mcp": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "prepack": "npm run build",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "claude",
+    "anthropic",
+    "mcp",
+    "usage"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
