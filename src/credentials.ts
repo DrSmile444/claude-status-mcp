@@ -8,6 +8,7 @@ const execFileAsync = promisify(execFile);
 
 const MACOS_KEYCHAIN_SERVICE = "Claude Code-credentials";
 const DEFAULT_CREDENTIALS_PATH = "~/.claude/credentials.json";
+const WINDOWS_CREDENTIALS_PATH = "~/.claude/.credentials.json";
 
 export class CredentialError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -41,6 +42,9 @@ function expandHome(path: string): string {
 }
 
 function getDefaultCredentialsPath(): string {
+  if (platform() === "win32") {
+    return expandHome(WINDOWS_CREDENTIALS_PATH);
+  }
   return expandHome(DEFAULT_CREDENTIALS_PATH);
 }
 
@@ -159,11 +163,20 @@ async function readTokenFromCredentialsFile(path: string): Promise<AccessTokenRe
 
 export async function getAccessToken(options: AccessTokenOptions = {}): Promise<AccessTokenResult> {
   const credentialsPath = options.credentialsPath ?? getDefaultCredentialsPath();
-  const readers = [
+
+  const readers: Array<() => Promise<AccessTokenResult | undefined>> = [
     readTokenFromEnvironment,
     readTokenFromMacosKeychain,
     () => readTokenFromCredentialsFile(credentialsPath),
   ];
+
+  // On Windows without a custom path, also try the alternate credentials filename
+  if (platform() === "win32" && !options.credentialsPath) {
+    const altPath = expandHome(DEFAULT_CREDENTIALS_PATH);
+    if (altPath !== credentialsPath) {
+      readers.push(() => readTokenFromCredentialsFile(altPath));
+    }
+  }
 
   for (const reader of readers) {
     const result = await reader();
@@ -172,11 +185,10 @@ export async function getAccessToken(options: AccessTokenOptions = {}): Promise<
     }
   }
 
-  throw new CredentialError(
-    [
-      "Unable to find a Claude OAuth access token.",
-      "Set CLAUDE_OAUTH_ACCESS_TOKEN, add the macOS Claude Code keychain item,",
-      `or create ${credentialsPath}.`,
-    ].join(" "),
-  );
+  const platformHint =
+    platform() === "win32"
+      ? `Set CLAUDE_OAUTH_ACCESS_TOKEN or ensure Claude Code has written credentials to ${credentialsPath}.`
+      : `Set CLAUDE_OAUTH_ACCESS_TOKEN, add the macOS Claude Code keychain item, or create ${credentialsPath}.`;
+
+  throw new CredentialError(`Unable to find a Claude OAuth access token. ${platformHint}`);
 }
