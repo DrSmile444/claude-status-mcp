@@ -4,6 +4,10 @@ Check your current Claude usage from the terminal, Claude Code, Codex, or any MC
 
 `claude-usage-mcp` solves a small but annoying problem: Claude Code already has an OAuth session on your machine, but your current usage limits are not easy to query from a terminal or another agent. At the moment, Claude Code does not provide a native command for retrieving this usage data. For example, asking Claude with something like `claude -p /usage` will not return the structured usage information from Anthropic's usage endpoint.
 
+```sh
+claude mcp add --scope user claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+```
+
 This package fills that gap. It finds the local Claude OAuth token, calls Anthropic's OAuth usage API, and returns the usage JSON directly.
 
 Use it as:
