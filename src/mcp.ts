@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -5,6 +6,9 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { getClaudeUsage } from "./usage.js";
+
+const _require = createRequire(import.meta.url);
+const { version } = _require("../package.json") as { version: string };
 
 const GET_USAGE_TOOL = "get_claude_usage";
 
@@ -25,7 +29,7 @@ export async function runMcpServer(): Promise<void> {
   const server = new Server(
     {
       name: "claude-usage-mcp",
-      version: "0.1.0",
+      version,
     },
     {
       capabilities: {
