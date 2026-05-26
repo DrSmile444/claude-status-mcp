@@ -1,20 +1,33 @@
 {
   "name": "claude-usage-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI and MCP server for retrieving current Claude OAuth usage.",
   "type": "module",
+  "main": "dist/mcp.js",
   "bin": {
     "claude-usage-mcp": "./dist/cli.js"
   },
+  "author": "Dmytro Vakulenko",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DrSmile444/claude-usage-mcp.git"
+  },
+  "homepage": "https://github.com/DrSmile444/claude-usage-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/DrSmile444/claude-usage-mcp/issues"
+  },
   "files": [
     "dist",
-    "README.md"
+    "docs",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/cli.ts",
+    "dev": "tsx src/cli.ts --mcp",
     "prepack": "npm run build",
-    "start": "node dist/cli.js",
+    "start": "node dist/cli.js --mcp",
+    "status": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
