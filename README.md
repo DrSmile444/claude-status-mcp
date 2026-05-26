@@ -10,13 +10,6 @@ claude mcp add --scope user claude-usage-mcp -- npx -y claude-usage-mcp --mcp
 
 This package fills that gap. It finds the local Claude OAuth token, calls Anthropic's OAuth usage API, and returns the usage JSON directly.
 
-Use it as:
-
-- a CLI: `npx claude-usage-mcp`
-- a Claude Code MCP server
-- a Codex MCP server
-- a local MCP server while developing or testing
-
 ## Demo
 
 <img src="docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
@@ -381,3 +374,7 @@ This package reads an OAuth access token so it can call Anthropic's usage API. T
 ## License
 
 MIT
+
+---
+
+Made with ❤️ by Dmytro Vakulenko, 2026
