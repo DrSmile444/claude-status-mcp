@@ -13,6 +13,10 @@ Use it as:
 - a Codex MCP server
 - a local MCP server while developing or testing
 
+## Demo
+
+<img src="docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
+
 ## Features
 
 - Reads Claude OAuth credentials from the places Claude Code already uses.
