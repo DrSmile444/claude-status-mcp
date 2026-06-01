@@ -49,16 +49,47 @@ interface CopilotUserResponse {
   limited_user_reset_date?: number | string | null;
 }
 
+interface WindowQuota {
+  entitlement: number;       // total limit for the window
+  percentRemaining: number;  // 0–100
+  percentUsed: number;
+  resetDate: string;         // ISO string or empty
+  resetsAt?: Date;
+}
+
 interface RateLimitProbeResult {
   rateLimited: boolean;
-  retryAfterSecs?: number;       // from retry-after header (429)
+  retryAfterSecs?: number;        // from retry-after header (429)
   resetsAt?: Date;
-  weeklyLimitInfo?: string;      // from x-usage-ratelimit-weekly header (200)
-  sessionLimitInfo?: string;     // from x-usage-ratelimit-session header (200)
-  quotaSnapshots?: {             // from x-quota-snapshot-* headers (200)
-    chat?: string;
-    completions?: string;
-  };
+  limitKey?: string;              // from x-ratelimit-exceeded (429), e.g. "global-usage-5-hour-key"
+  // 200-response window quota (only present with proper Copilot session auth):
+  sessionQuota?: WindowQuota;     // from x-usage-ratelimit-session
+  weeklyQuota?: WindowQuota;      // from x-usage-ratelimit-weekly
+  chatSnapshotQuota?: WindowQuota; // from x-quota-snapshot-chat
+}
+
+// ── Header parsers ────────────────────────────────────────────────────────────
+
+// Parses "ent=200&rem=67.5&rst=2026-06-01T14:00:00Z" format
+// Used by: x-usage-ratelimit-session, x-usage-ratelimit-weekly, x-quota-snapshot-chat
+function parseWindowHeader(raw: string | null): WindowQuota | undefined {
+  if (!raw) return undefined;
+  try {
+    const p = new URLSearchParams(raw);
+    const ent = Number.parseInt(p.get("ent") ?? "0", 10);
+    const rem = Number.parseFloat(p.get("rem") ?? "100");
+    const rst = p.get("rst") ?? "";
+    const resetsAt = rst ? new Date(rst) : undefined;
+    return {
+      entitlement: ent,
+      percentRemaining: rem,
+      percentUsed: Math.max(0, 100 - rem),
+      resetDate: rst,
+      resetsAt,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 // ── Token resolution ──────────────────────────────────────────────────────────
@@ -155,21 +186,27 @@ async function probeCAPIRateLimit(
   });
 
   if (resp.status === 429) {
-    const retryAfterSecs = Number(resp.headers.get("retry-after") ?? resp.headers.get("x-ratelimit-user-retry-after") ?? "0");
+    const retryAfterSecs = Number(
+      resp.headers.get("retry-after") ??
+      resp.headers.get("x-ratelimit-user-retry-after") ??
+      "0"
+    );
     const resetsAt = retryAfterSecs > 0 ? new Date(Date.now() + retryAfterSecs * 1000) : undefined;
-    return { rateLimited: true, retryAfterSecs, resetsAt };
+    // x-ratelimit-exceeded: "global-chat:global-usage-5-hour-key:userID:COPILOT_PLAN_INDIVIDUAL"
+    const exceeded = resp.headers.get("x-ratelimit-exceeded") ?? undefined;
+    const limitKey = exceeded?.split(":")?.[1]; // e.g. "global-usage-5-hour-key"
+    return { rateLimited: true, retryAfterSecs, resetsAt, limitKey };
   }
 
-  // 200 — check for soft-limit warning headers
-  return {
-    rateLimited: false,
-    weeklyLimitInfo: resp.headers.get("x-usage-ratelimit-weekly") ?? undefined,
-    sessionLimitInfo: resp.headers.get("x-usage-ratelimit-session") ?? undefined,
-    quotaSnapshots: {
-      chat: resp.headers.get("x-quota-snapshot-chat") ?? undefined,
-      completions: resp.headers.get("x-quota-snapshot-completions") ?? undefined,
-    },
-  };
+  // 200 — parse window quota headers (% used in current window)
+  // These only appear with proper Copilot session auth, not with gh/OAuth tokens
+  const sessionQuota = parseWindowHeader(resp.headers.get("x-usage-ratelimit-session"));
+  const weeklyQuota  = parseWindowHeader(resp.headers.get("x-usage-ratelimit-weekly"));
+  const chatSnapshotQuota = parseWindowHeader(
+    resp.headers.get("x-quota-snapshot-chat") ??
+    resp.headers.get("x-quota-snapshot-premium_interactions")
+  );
+  return { rateLimited: false, sessionQuota, weeklyQuota, chatSnapshotQuota };
 }
 
 // ── Get monthly quota ─────────────────────────────────────────────────────────
@@ -194,6 +231,11 @@ function humanDiff(date: Date): string {
   const m = Math.floor((diffSecs % 3600) / 60);
   const s = diffSecs % 60;
   return h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function buildBar(usedPercent: number, width = 20): string {
+  const filled = Math.round((usedPercent / 100) * width);
+  return `[${"█".repeat(filled)}${"░".repeat(width - filled)}]`;
 }
 
 function fmt(remaining: number | undefined, entitlement: number | undefined): string {
@@ -236,12 +278,27 @@ async function main(): Promise<void> {
   if (sessionEnvelope) {
     const apiBase = sessionEnvelope.endpoints?.api ?? "https://api.individual.githubcopilot.com";
 
+    const isMockNotLimited = process.argv.includes("--mock-not-limited");
+
     if (isMock) {
-      // Simulate a live rate limit
       probe = {
         rateLimited: true,
         retryAfterSecs: 2 * 3600 + 8 * 60,
         resetsAt: new Date(Date.now() + (2 * 3600 + 8 * 60) * 1000),
+        limitKey: "global-usage-5-hour-key",
+      };
+    } else if (isMockNotLimited) {
+      // Simulate a 200 response at 50% through the window
+      const windowResetsIn = 2.5 * 3600; // 2.5 hours left in 5h window
+      probe = {
+        rateLimited: false,
+        sessionQuota: {
+          entitlement: 0,
+          percentRemaining: 50.0,
+          percentUsed: 50.0,
+          resetDate: new Date(Date.now() + windowResetsIn * 1000).toISOString(),
+          resetsAt: new Date(Date.now() + windowResetsIn * 1000),
+        },
       };
     } else {
       console.log("⏳ Probing CAPI for rate limit status...");
@@ -267,22 +324,26 @@ async function main(): Promise<void> {
   } else if (probe.rateLimited) {
     const resetStr = probe.resetsAt ? probe.resetsAt.toISOString() : "unknown";
     const diffStr = probe.resetsAt ? humanDiff(probe.resetsAt) : "unknown";
-    console.log(`  ⛔  RATE LIMITED`);
-    console.log(`  Resets at:  ${resetStr}`);
-    console.log(`  Resets in:  ${diffStr}`);
-    if (probe.retryAfterSecs) {
-      console.log(`  retry-after: ${probe.retryAfterSecs}s`);
-    }
+    console.log(`  ⛔  RATE LIMITED — 0% remaining`);
+    console.log(`  Resets at:   ${resetStr}`);
+    console.log(`  Resets in:   ${diffStr}`);
+    if (probe.retryAfterSecs) console.log(`  retry-after: ${probe.retryAfterSecs}s`);
+    if (probe.limitKey)       console.log(`  Limit key:   ${probe.limitKey}`);
   } else {
-    console.log("  ✅  Not rate limited");
-    if (probe.weeklyLimitInfo) {
-      console.log(`  Weekly limit header:  ${probe.weeklyLimitInfo}`);
-    }
-    if (probe.sessionLimitInfo) {
-      console.log(`  Session limit header: ${probe.sessionLimitInfo}`);
-    }
-    if (probe.quotaSnapshots?.chat) {
-      console.log(`  x-quota-snapshot-chat: ${probe.quotaSnapshots.chat}`);
+    // Pick the most informative window quota available
+    const wq = probe.sessionQuota ?? probe.weeklyQuota ?? probe.chatSnapshotQuota;
+    if (wq) {
+      const bar = buildBar(wq.percentUsed);
+      console.log(`  ✅  Not rate limited`);
+      console.log(`  Window used:       ${wq.percentUsed.toFixed(1)}%  ${bar}  ${wq.percentRemaining.toFixed(1)}% remaining`);
+      if (wq.entitlement > 0) console.log(`  Window limit:      ${wq.entitlement}`);
+      if (wq.resetsAt)        console.log(`  Window resets at:  ${wq.resetsAt.toISOString()} (in ${humanDiff(wq.resetsAt)})`);
+      if (probe.sessionQuota && probe.weeklyQuota) {
+        console.log(`  (session: ${probe.sessionQuota.percentRemaining.toFixed(1)}% rem / weekly: ${probe.weeklyQuota.percentRemaining.toFixed(1)}% rem)`);
+      }
+    } else {
+      console.log("  ✅  Not rate limited");
+      console.log("  Window usage:  unavailable (quota headers absent — gh token bypasses Copilot rate limiting)");
     }
   }
 
