@@ -9,14 +9,14 @@ interface CliOptions {
 }
 
 function printHelp(): void {
-  process.stdout.write(`claude-usage-mcp
+  process.stdout.write(`claude-status-mcp
 
 Fetch current Claude OAuth usage or run as an MCP stdio server.
 
 Usage:
-  claude-usage-mcp [--credentials-path <path>]
-  claude-usage-mcp --mcp
-  claude-usage-mcp --help
+  claude-status-mcp [--credentials-path <path>]
+  claude-status-mcp --mcp
+  claude-status-mcp --help
 
 Options:
   --credentials-path <path>  Read Claude credentials from a custom JSON file.

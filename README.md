@@ -1,18 +1,18 @@
-# claude-usage-mcp
+# claude-status-mcp
 
 Check your current Claude usage from the terminal, Claude Code, Codex, or any MCP client.
 
-`claude-usage-mcp` solves a small but annoying problem: Claude Code already has an OAuth session on your machine, but your current usage limits are not easy to query from a terminal or another agent. At the moment, Claude Code does not provide a native command for retrieving this usage data. For example, asking Claude with something like `claude -p /usage` will not return the structured usage information from Anthropic's usage endpoint.
+`claude-status-mcp` solves a small but annoying problem: Claude Code already has an OAuth session on your machine, but your current usage limits are not easy to query from a terminal or another agent. At the moment, Claude Code does not provide a native command for retrieving this usage data. For example, asking Claude with something like `claude -p /usage` will not return the structured usage information from Anthropic's usage endpoint.
 
 ```sh
-claude mcp add --scope user claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+claude mcp add --scope user claude-status-mcp -- npx -y claude-status-mcp --mcp
 ```
 
 This package fills that gap. It finds the local Claude OAuth token, calls Anthropic's OAuth usage API, and returns the usage JSON directly.
 
 ## Demo
 
-<img src="docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
+<img src="https://raw.githubusercontent.com/DrSmile444/claude-status-mcp/main/docs/claude-status-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
 
 ## Features
 
@@ -28,19 +28,19 @@ This package fills that gap. It finds the local Claude OAuth token, calls Anthro
 Print your current usage in a terminal:
 
 ```sh
-npx claude-usage-mcp
+npx claude-status-mcp
 ```
 
 Add it to Claude Code:
 
 ```sh
-claude mcp add --scope user claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+claude mcp add --scope user claude-status-mcp -- npx -y claude-status-mcp --mcp
 ```
 
 Add it to Codex:
 
 ```sh
-codex mcp add claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+codex mcp add claude-status-mcp -- npx -y claude-status-mcp --mcp
 ```
 
 After adding the MCP server, restart Claude Code or Codex. Most MCP clients load servers when a new session starts.
@@ -77,7 +77,7 @@ The credentials file should contain:
 Run once with `npx`:
 
 ```sh
-npx claude-usage-mcp
+npx claude-status-mcp
 ```
 
 Example output:
@@ -101,19 +101,19 @@ Example output:
 Use a custom credentials file:
 
 ```sh
-npx claude-usage-mcp --credentials-path /path/to/credentials.json
+npx claude-status-mcp --credentials-path /path/to/credentials.json
 ```
 
 Use an explicit token:
 
 ```sh
-CLAUDE_OAUTH_ACCESS_TOKEN="sk-ant-..." npx claude-usage-mcp
+CLAUDE_OAUTH_ACCESS_TOKEN="sk-ant-..." npx claude-status-mcp
 ```
 
 Show CLI help:
 
 ```sh
-npx claude-usage-mcp --help
+npx claude-status-mcp --help
 ```
 
 ## MCP Setup
@@ -137,14 +137,14 @@ It returns the same JSON as the CLI. The tool accepts one optional argument:
 Add the published package:
 
 ```sh
-claude mcp add --scope user claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+claude mcp add --scope user claude-status-mcp -- npx -y claude-status-mcp --mcp
 ```
 
 Verify:
 
 ```sh
 claude mcp list
-claude mcp get claude-usage-mcp
+claude mcp get claude-status-mcp
 ```
 
 Equivalent MCP JSON:
@@ -152,9 +152,9 @@ Equivalent MCP JSON:
 ```json
 {
   "mcpServers": {
-    "claude-usage-mcp": {
+    "claude-status-mcp": {
       "command": "npx",
-      "args": ["-y", "claude-usage-mcp", "--mcp"]
+      "args": ["-y", "claude-status-mcp", "--mcp"]
     }
   }
 }
@@ -165,22 +165,22 @@ Equivalent MCP JSON:
 Add the published package:
 
 ```sh
-codex mcp add claude-usage-mcp -- npx -y claude-usage-mcp --mcp
+codex mcp add claude-status-mcp -- npx -y claude-status-mcp --mcp
 ```
 
 Verify:
 
 ```sh
 codex mcp list
-codex mcp get claude-usage-mcp --json
+codex mcp get claude-status-mcp --json
 ```
 
 Codex writes this to `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.claude-usage-mcp]
+[mcp_servers.claude-status-mcp]
 command = "npx"
-args = ["-y", "claude-usage-mcp", "--mcp"]
+args = ["-y", "claude-status-mcp", "--mcp"]
 ```
 
 ### Other MCP Clients
@@ -190,9 +190,9 @@ Use the same stdio server command:
 ```json
 {
   "mcpServers": {
-    "claude-usage-mcp": {
+    "claude-status-mcp": {
       "command": "npx",
-      "args": ["-y", "claude-usage-mcp", "--mcp"]
+      "args": ["-y", "claude-status-mcp", "--mcp"]
     }
   }
 }
@@ -200,7 +200,7 @@ Use the same stdio server command:
 
 ## How It Works
 
-`claude-usage-mcp` is a thin wrapper around Claude Code's existing OAuth session.
+`claude-status-mcp` is a thin wrapper around Claude Code's existing OAuth session.
 
 When you run the CLI or call the MCP tool, it finds an access token from your environment, the macOS Keychain, or a Claude credentials file. Then it sends one authenticated request to Anthropic's OAuth usage endpoint:
 
@@ -277,13 +277,13 @@ node dist/cli.js --mcp
 Use the compiled entrypoint:
 
 ```sh
-claude mcp add --scope user claude-usage-mcp -- node /absolute/path/to/claude-usage-mcp/dist/cli.js --mcp
+claude mcp add --scope user claude-status-mcp -- node /absolute/path/to/claude-status-mcp/dist/cli.js --mcp
 ```
 
 Or run TypeScript directly with `tsx`:
 
 ```sh
-claude mcp add --scope user claude-usage-mcp -- npx tsx /absolute/path/to/claude-usage-mcp/src/cli.ts --mcp
+claude mcp add --scope user claude-status-mcp -- npx tsx /absolute/path/to/claude-status-mcp/src/cli.ts --mcp
 ```
 
 ### Codex From Local Checkout
@@ -291,13 +291,13 @@ claude mcp add --scope user claude-usage-mcp -- npx tsx /absolute/path/to/claude
 Use the compiled entrypoint:
 
 ```sh
-codex mcp add claude-usage-mcp -- node /absolute/path/to/claude-usage-mcp/dist/cli.js --mcp
+codex mcp add claude-status-mcp -- node /absolute/path/to/claude-status-mcp/dist/cli.js --mcp
 ```
 
 Or run TypeScript directly with `tsx`:
 
 ```sh
-codex mcp add claude-usage-mcp -- npx tsx /absolute/path/to/claude-usage-mcp/src/cli.ts --mcp
+codex mcp add claude-status-mcp -- npx tsx /absolute/path/to/claude-status-mcp/src/cli.ts --mcp
 ```
 
 ## Development
@@ -345,13 +345,13 @@ npm pack --dry-run
 Make sure Claude Code is logged in on this machine, or pass a token explicitly:
 
 ```sh
-CLAUDE_OAUTH_ACCESS_TOKEN="sk-ant-..." npx claude-usage-mcp
+CLAUDE_OAUTH_ACCESS_TOKEN="sk-ant-..." npx claude-status-mcp
 ```
 
 You can also point the command or MCP tool at a credentials file:
 
 ```sh
-npx claude-usage-mcp --credentials-path /path/to/credentials.json
+npx claude-status-mcp --credentials-path /path/to/credentials.json
 ```
 
 ### MCP Tool Does Not Show Up

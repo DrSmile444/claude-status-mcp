@@ -28,7 +28,7 @@ function isGetUsageArguments(value: unknown): value is GetUsageArguments {
 export async function runMcpServer(): Promise<void> {
   const server = new Server(
     {
-      name: "claude-usage-mcp",
+      name: "claude-status-mcp",
       version,
     },
     {
