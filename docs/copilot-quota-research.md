@@ -187,6 +187,29 @@ Free tier uses `token_based_billing: true` — quota is measured in AIU (AI Unit
 
 ---
 
+## Window Usage % — What's Actually Knowable
+
+A common question: "how much of my 5-hour window have I used?" The answer is: **it depends on how much you've used.**
+
+The CAPI does not have a dedicated `/quota` or `/rate_limits` status endpoint. Window usage info is only sent **reactively**, embedded in other responses:
+
+| Usage level | What the API sends | % knowable? |
+|---|---|---|
+| < 50% of window used | No quota headers | ❌ Not available |
+| ≥ 50% / ≥ 75% / ≥ 90% used | `x-usage-ratelimit-session` header on next 200 response | ✅ Available |
+| 100% used (exhausted) | `429` with `retry-after` | ✅ 0% + reset time |
+
+This is because the JetBrains/VS Code clients use these headers for **threshold warnings** ("You've used 50% of your session limit"), not continuous tracking. The server only injects them when a threshold is crossed:
+
+```js
+// JetBrains agent — checkThreshold fires at 50%, 75%, 90%
+checkThreshold(this._sessionRateLimit, this._shownSessionThresholds, "session")
+```
+
+When headers ARE present, they use the URL-params format: `ent=N&rem=67.5&rst=<date>`.
+
+**Practical implication for the MCP tool:** Show "✅ Not rate limited" below 50% usage, show `X% remaining` when the server volunteers it (≥50% usage), show `⛔ RATE LIMITED — resets in Xm` on 429.
+
 ## Caveats
 
 1. **`copilot_internal/*` endpoints are not officially documented.** They're used internally by the official Copilot CLI SDK (`@github/copilot@1.0.37`), so they're stable relative to the product — but could change without notice.
