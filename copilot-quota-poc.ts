@@ -338,13 +338,22 @@ async function main(): Promise<void> {
     // Pick the most informative window quota available
     const wq = probe.sessionQuota ?? probe.weeklyQuota ?? probe.chatSnapshotQuota;
     if (wq) {
-      const bar = buildBar(wq.percentUsed);
       console.log(`  ✅  Not rate limited`);
-      console.log(`  Window used:       ${wq.percentUsed.toFixed(1)}%  ${bar}  ${wq.percentRemaining.toFixed(1)}% remaining`);
       if (wq.entitlement > 0) console.log(`  Window limit:      ${wq.entitlement}`);
-      if (wq.resetsAt)        console.log(`  Window resets at:  ${wq.resetsAt.toISOString()} (in ${humanDiff(wq.resetsAt)})`);
-      if (probe.sessionQuota && probe.weeklyQuota) {
-        console.log(`  (session: ${probe.sessionQuota.percentRemaining.toFixed(1)}% rem / weekly: ${probe.weeklyQuota.percentRemaining.toFixed(1)}% rem)`);
+      if (probe.sessionQuota) {
+        const s = probe.sessionQuota;
+        const bar = buildBar(s.percentUsed);
+        console.log(`  5h session:        ${s.percentUsed.toFixed(1)}% used  ${bar}  ${s.percentRemaining.toFixed(1)}% remaining`);
+        if (s.resetsAt) console.log(`  Session resets at: ${s.resetsAt.toISOString()} (in ${humanDiff(s.resetsAt)})`);
+      }
+      if (probe.weeklyQuota) {
+        const w = probe.weeklyQuota;
+        const bar = buildBar(w.percentUsed);
+        console.log(`  Weekly:            ${w.percentUsed.toFixed(1)}% used  ${bar}  ${w.percentRemaining.toFixed(1)}% remaining`);
+        if (w.resetsAt) console.log(`  Weekly resets at:  ${w.resetsAt.toISOString()} (in ${humanDiff(w.resetsAt)})`);
+      }
+      if (!probe.sessionQuota && !probe.weeklyQuota && wq.resetsAt) {
+        console.log(`  Window resets at:  ${wq.resetsAt.toISOString()} (in ${humanDiff(wq.resetsAt)})`);
       }
     } else {
       console.log("  ✅  Not rate limited");
