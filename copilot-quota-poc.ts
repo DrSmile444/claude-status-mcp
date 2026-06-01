@@ -168,6 +168,7 @@ async function probeCAPIRateLimit(
   sessionToken: string,
   apiBase: string,
 ): Promise<RateLimitProbeResult> {
+  const interactionId = crypto.randomUUID();
   const resp = await fetch(`${apiBase}/chat/completions`, {
     method: "POST",
     headers: {
@@ -176,6 +177,10 @@ async function probeCAPIRateLimit(
       "Copilot-Integration-Id": "vscode-chat",
       "Editor-Version": "vscode/1.95.0",
       "Editor-Plugin-Version": "copilot-chat/0.48.1",
+      "X-GitHub-Api-Version": "2025-05-01",
+      "X-Interaction-Id": interactionId,
+      "X-Initiator": "user",
+      "OpenAI-Intent": "conversation-panel",
     },
     body: JSON.stringify({
       model: "gpt-5-mini",
