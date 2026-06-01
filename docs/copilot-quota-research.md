@@ -81,20 +81,39 @@ Returns a short-lived CAPI session token (~30 min) with a quota envelope. Requir
 
 ### 3. `POST https://api.individual.githubcopilot.com/chat/completions` (probe)
 
-The only reliable way to detect the short-term rate limit is to make a real CAPI request. When rate limited, the API returns `HTTP 429` with:
+The only reliable way to detect and measure the short-term rate limit is to make a real CAPI request. Requires a Copilot session token (from `v2/token`), not a `gh` OAuth token.
 
+**When rate limited → `HTTP 429`:**
 ```
 retry-after: 6311
 x-ratelimit-user-retry-after: 6311
+x-ratelimit-exceeded: global-chat:global-usage-5-hour-key:userID:COPILOT_PLAN_INDIVIDUAL
 ```
 
-`retry-after` is in **seconds** until the rate limit resets.
+- `retry-after` — seconds until rate limit resets
+- `x-ratelimit-exceeded` — identifies the limit that was hit; the key name (`global-usage-5-hour-key`) reveals the window duration
+- Body: `"Sorry, you've exceeded your 5 hour session limits."`
 
-When not rate limited, a `200` response may include quota warning headers (appear when approaching limits):
-- `x-quota-snapshot-chat` — URL-encoded snapshot: `ent=200&rem=99.9&rst=<timestamp>&...`
-- `x-quota-snapshot-completions`
-- `x-usage-ratelimit-weekly` — weekly usage rate limit info
-- `x-usage-ratelimit-session` — session rate limit info
+> **Important:** The rate limit window is **5 hours**, not 2 hours. A user seeing "resets in 2h 8m" is partway through their 5-hour window (2h52m elapsed when they hit it).
+
+**When not rate limited → `HTTP 200`:**
+
+Response headers contain window usage (only present with proper Copilot session auth, absent with `gh` tokens):
+
+```
+x-usage-ratelimit-session: ent=50&rem=67.5&rst=2026-06-01T14:00:00Z
+x-usage-ratelimit-weekly:  ent=200&rem=89.0&rst=2026-06-07T00:00:00Z
+x-quota-snapshot-chat:     ent=200&rem=99.9&rst=2026-06-30T21:00:00Z&ov=0&ovPerm=false
+```
+
+All use the same URL-params format:
+- `ent` — total entitlement for the window
+- `rem` — percent remaining (0–100)
+- `rst` — ISO date when window resets
+- `ov` — overage count (quota snapshots only)
+- `ovPerm` — overage permitted (quota snapshots only)
+
+`used % = 100 - rem`
 
 ---
 
