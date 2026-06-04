@@ -214,6 +214,15 @@ async function probeCAPIRateLimit(
   return { rateLimited: false, sessionQuota, weeklyQuota, chatSnapshotQuota };
 }
 
+// Returns the next Monday 00:00 UTC — the weekly quota reset boundary
+function nextWeeklyReset(): Date {
+  const now = new Date();
+  const day = now.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const daysUntilMonday = day === 1 ? 7 : (8 - day) % 7;
+  const reset = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysUntilMonday));
+  return reset;
+}
+
 // ── Get monthly quota ─────────────────────────────────────────────────────────
 
 async function getCopilotUserInfo(oauthToken: string): Promise<CopilotUserResponse> {
@@ -329,11 +338,12 @@ async function main(): Promise<void> {
   } else if (probe.rateLimited) {
     const resetStr = probe.resetsAt ? probe.resetsAt.toISOString() : "unknown";
     const diffStr = probe.resetsAt ? humanDiff(probe.resetsAt) : "unknown";
+    const weeklyReset = nextWeeklyReset();
     console.log(`  ⛔  RATE LIMITED — 0% remaining`);
-    console.log(`  Resets at:   ${resetStr}`);
-    console.log(`  Resets in:   ${diffStr}`);
-    if (probe.retryAfterSecs) console.log(`  retry-after: ${probe.retryAfterSecs}s`);
-    if (probe.limitKey)       console.log(`  Limit key:   ${probe.limitKey}`);
+    console.log(`  5h session resets at: ${resetStr} (in ${diffStr})`);
+    if (probe.retryAfterSecs) console.log(`  retry-after:          ${probe.retryAfterSecs}s`);
+    if (probe.limitKey)       console.log(`  Limit key:            ${probe.limitKey}`);
+    console.log(`  Weekly resets at:     ${weeklyReset.toISOString()} (in ${humanDiff(weeklyReset)}) — usage % unavailable while rate limited`);
   } else {
     // Pick the most informative window quota available
     const wq = probe.sessionQuota ?? probe.weeklyQuota ?? probe.chatSnapshotQuota;
