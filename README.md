@@ -12,7 +12,7 @@ This package fills that gap. It finds the local Claude OAuth token, calls Anthro
 
 ## Demo
 
-<img src="https://raw.githubusercontent.com/DrSmile444/claude-status-mcp/main/docs/claude-status-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
+<img src="https://raw.githubusercontent.com/DrSmile444/claude-usage-mcp/main/docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
 
 ## Features
 
@@ -370,6 +370,14 @@ This package reads an OAuth access token so it can call Anthropic's usage API. T
 - Do not paste tokens into shared logs.
 - Prefer the macOS Keychain or environment variables over hardcoded config.
 - The package returns token source metadata, not the token value.
+
+## Related Packages
+
+These packages are part of the same family of AI provider status tools:
+
+- [codex-status-mcp](https://github.com/DrSmile444/codex-status-mcp) — Codex / ChatGPT rate-limit windows and credits
+- [copilot-status-mcp](https://github.com/DrSmile444/copilot-status-mcp) — GitHub Copilot session, weekly, and monthly quota
+- [provider-status-mcp](https://github.com/DrSmile444/provider-status-mcp) — Aggregates Claude, Codex, and Copilot status into a single view
 
 ## License
 
