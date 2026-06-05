@@ -12,7 +12,7 @@ This package fills that gap. It finds the local Claude OAuth token, calls Anthro
 
 ## Demo
 
-<img src="https://raw.githubusercontent.com/DrSmile444/claude-usage-mcp/main/docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
+<img src="https://raw.githubusercontent.com/DrSmile444/claude-status-mcp/main/docs/claude-usage-demo.png" alt="Claude usage shown as a table in an MCP client" width="540">
 
 ## Features
 
