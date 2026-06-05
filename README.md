@@ -51,6 +51,37 @@ Then ask your MCP client something like:
 What is my current Claude usage?
 ```
 
+## Programmatic Usage
+
+Install the package and import directly:
+
+```sh
+npm install claude-status-mcp
+```
+
+```typescript
+import { getClaudeUsage } from "claude-status-mcp";
+
+const result = await getClaudeUsage();
+console.log(result.usage.five_hour?.utilization); // e.g. 42
+```
+
+With options:
+
+```typescript
+import { getClaudeUsage } from "claude-status-mcp";
+
+const result = await getClaudeUsage({
+  credentialsPath: "/path/to/credentials.json",
+});
+```
+
+The package exports:
+- `getClaudeUsage(options?)` — fetch current usage; returns `ClaudeUsageResult`
+- `getAccessToken(options?)` — resolve OAuth token only; returns `AccessTokenResult`
+- `UsageApiError` — thrown when the Anthropic API returns an error
+- `CredentialError` — thrown when no token can be found
+
 ## Requirements
 
 - Node.js 18 or newer.

@@ -3,7 +3,12 @@
   "version": "0.2.0",
   "description": "CLI and MCP server for retrieving current Claude OAuth usage.",
   "type": "module",
-  "main": "dist/mcp.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./mcp": "./dist/mcp.js"
+  },
   "bin": {
     "claude-status-mcp": "./dist/cli.js"
   },
