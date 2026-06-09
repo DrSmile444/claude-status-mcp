@@ -22,6 +22,7 @@ This package fills that gap. It finds the local Claude OAuth token, calls Anthro
 - Runs without a daemon, database, or extra service.
 - Does not store, log, or refresh your token.
 - Supports explicit tokens through `CLAUDE_OAUTH_ACCESS_TOKEN`.
+- `--pretty` flag for a human-readable terminal summary with progress bars.
 
 ## Quick Start
 
@@ -29,6 +30,12 @@ Print your current usage in a terminal:
 
 ```sh
 npx claude-status-mcp
+```
+
+Pretty-print for humans:
+
+```sh
+npx claude-status-mcp --pretty
 ```
 
 Add it to Claude Code:
@@ -145,6 +152,44 @@ Show CLI help:
 
 ```sh
 npx claude-status-mcp --help
+```
+
+### Pretty output
+
+```sh
+npx claude-status-mcp --pretty
+```
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ Claude Usage
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ Token source : macos-keychain
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 5h window
+   [██████████░░░░░░░░░░] 48%
+   Resets in 51m (2026-06-09T11:40:01Z)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 7d window
+   [██████████████░░░░░░] 71%
+   Resets in 92h 11m (2026-06-13T07:00:00Z)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ 7d Sonnet window
+   [██░░░░░░░░░░░░░░░░░░] 8%
+   Resets in 92h 11m (2026-06-13T07:00:00Z)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### All flags
+
+```sh
+npx claude-status-mcp [options]
+
+Options:
+  --pretty                   Human-readable summary with progress bars instead of JSON.
+  --credentials-path <path>  Path to a credentials JSON file.
+  --mcp                      Run as an MCP stdio server.
+  --help, -h                 Show help.
 ```
 
 ## MCP Setup
